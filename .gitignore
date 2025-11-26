@@ -1,0 +1,12 @@
+.csv
+.bin
+
+# Environments
+project_env/
+
+# VSCode settings
+.vscode/
+
+input/
+
+tempDoc.txt
