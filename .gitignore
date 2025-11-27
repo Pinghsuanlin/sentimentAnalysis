@@ -10,3 +10,6 @@ project-env/
 input/
 
 tempDoc.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints
