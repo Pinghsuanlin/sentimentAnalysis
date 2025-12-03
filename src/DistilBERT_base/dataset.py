@@ -23,30 +23,44 @@ class BERTDataset:
         # convert HTML newlines to spaces
         review = review.replace("<br />", " ")
 
-        inputs = self.tokenizer.encode_plus(
+        # if using DistilBERT tokenizer
+        inputs = self.tokenizer(
             review,
             None,
             add_special_tokens=True, # Add [CLS] and [SEP]
             max_length=self.max_len,
             padding='max_length',
             truncation=True,
-            return_token_type_ids=True,
             return_attention_mask=True,
             return_tensors='pt',
         )
-        ids = inputs['input_ids']
-        mask = inputs['attention_mask']
-        token_type_ids = inputs['token_type_ids']
+        
+        # if using BERT-based-uncased tokenizer
+        # inputs = self.tokenizer.encode_plus(
+        #     review,
+        #     None,
+        #     add_special_tokens=True, # Add [CLS] and [SEP]
+        #     max_length=self.max_len,
+        #     padding='max_length',
+        #     truncation=True,
+        #     return_token_type_ids=True,
+        #     return_attention_mask=True,
+        #     return_tensors='pt',
+        # )
 
-        padding_length = self.max_len - ids.size(1)
-        ids = ids + ([0] * padding_length)
-        mask = mask + ([0] * padding_length)
-        token_type_ids = token_type_ids + ([0] * padding_length)
+        # inputs returned with shape (1, seq_len) because of `return_tensors='pt'`
+        ids = inputs['input_ids'].squeeze(0)        # shape: (seq_len,)
+        mask = inputs['attention_mask'].squeeze(0)  # shape: (seq_len,)
+        token_type_ids = inputs['token_type_ids'].squeeze(0)
 
+        # Ensure correct dtypes
+        ids = ids.to(dtype=torch.long)
+        mask = mask.to(dtype=torch.long)
+        token_type_ids = token_type_ids.to(dtype=torch.long)
 
         return {
-            'ids': torch.tensor(ids, dtype=torch.long),
-            'mask': torch.tensor(mask, dtype=torch.long),
-            'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
+            'ids': ids,
+            'mask': mask,
+            'token_type_ids': token_type_ids,
             'targets': torch.tensor(self.targets[item], dtype=torch.float).unsqueeze(0) # unsqueeze to add an extra dimension
         }

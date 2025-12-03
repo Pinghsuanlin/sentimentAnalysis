@@ -8,12 +8,12 @@ import torch.nn as nn
 import pandas as pd
 import engine
 import numpy as np
-
 from sklearn import metrics
 
 from sklearn import model_selection
 from model import BERTBaseUncased
-from transformers import AdamW, get_linear_schedule_with_warmup
+from torch.optim import AdamW
+from transformers import get_linear_schedule_with_warmup
 
 def run():
     dfx = pd.read_csv(config.TRAINING_FILE).fillna("none")
@@ -35,12 +35,22 @@ def run():
         reviews=df_train.review.values,
         targets=df_train.sentiment.values
     )
+    
+    # Quick sanity check
+    print(f"[DEBUG] train_dataset length: {len(train_dataset)}")
+    try:
+        sample = train_dataset[0]
+        print(f"[DEBUG] Sample keys: {sample.keys()}")
+        print(f"[DEBUG] Sample shapes: ids={sample['ids'].shape}, mask={sample['mask'].shape}, targets={sample['targets'].shape}")
+    except Exception as e:
+        print(f"[ERROR] Failed to load sample from dataset: {e}")
+        raise
 
     train_data_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=config.TRAIN_BATCH_SIZE,
         shuffle=True,
-        num_workers=4
+        num_workers=0
     )
 
     valid_dataset = dataset.BERTDataset(
@@ -52,11 +62,12 @@ def run():
         valid_dataset,
         batch_size=config.VALID_BATCH_SIZE,
         shuffle=True,
-        num_workers=1
+        num_workers=0
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = BERTBaseUncased()
+    model.to(device)
 
     param_optimizer = list(model.named_parameters())
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
@@ -72,14 +83,18 @@ def run():
     ]
 
     num_train_steps = int(len(df_train) / config.TRAIN_BATCH_SIZE * config.EPOCHS)
-    optimizer = AdamW(optimizer_parameters, lr=3e-5)
+    optimizer = AdamW(optimizer_parameters, lr=config.LEARNING_RATE)
     scheduler = get_linear_schedule_with_warmup(
         optimizer,
         num_warmup_steps=0,
         num_training_steps=num_train_steps
     )
 
-    model = nn.DataParallel(model)
+    # model = nn.DataParallel(model)
+    # move model to device (GPU/CPU) before training
+    
+    
+    loss_fn = nn.BCEWithLogitsLoss()
 
     # training loop
     best_accuracy = 0
@@ -91,7 +106,8 @@ def run():
             optimizer,
             device,
             config.ACCUMULATION_STEPS,
-            scheduler
+            scheduler,
+            loss_fn
         )
 
         outputs, targets = engine.eval_fn(
@@ -105,7 +121,7 @@ def run():
         print(f"Accuracy = {accuracy}")
         # save the best model
         if accuracy > best_accuracy:
-            torch.save(model.module.state_dict(), config.MODEL_SAVE_PATH)
+            torch.save(model.state_dict(), config.MODEL_SAVE_PATH)
             best_accuracy = accuracy
 
 
