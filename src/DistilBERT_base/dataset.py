@@ -35,19 +35,6 @@ class BERTDataset:
             return_tensors='pt',
         )
         
-        # if using BERT-based-uncased tokenizer
-        # inputs = self.tokenizer.encode_plus(
-        #     review,
-        #     None,
-        #     add_special_tokens=True, # Add [CLS] and [SEP]
-        #     max_length=self.max_len,
-        #     padding='max_length',
-        #     truncation=True,
-        #     return_token_type_ids=True,
-        #     return_attention_mask=True,
-        #     return_tensors='pt',
-        # )
-
         # inputs returned with shape (1, seq_len) because of `return_tensors='pt'`
         ids = inputs['input_ids'].squeeze(0)        # shape: (seq_len,)
         mask = inputs['attention_mask'].squeeze(0)  # shape: (seq_len,)
