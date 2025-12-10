@@ -10,8 +10,10 @@ project-env/
 input/
 
 tempDoc.txt
+distilBERT.py
 
 **/__pycache__/
+**/model.bin
 
 # Jupyter Notebook
 .ipynb_checkpoints
