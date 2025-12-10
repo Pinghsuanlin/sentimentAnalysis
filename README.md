@@ -6,6 +6,8 @@ This project covers a full-stack Machine Learning pipeline, progressing from a t
 ### Goal
 The project goal is build and deploy a robust sentiment classification service that determines whether an IMDB movie text review is "Positive" or "Negative."
 
+---
+---
 
 ## 2. Project Architecture & Pipeline
 
@@ -15,6 +17,8 @@ The project follows a three-stage development process:
 2.  **Advanced Modeling:** Fine-tuning a deep learning model (DistilBERT).
 3.  **Deployment:** Containerize the solution for universal portability and reliable API serving.
 
+---
+---
 
 ## 3. Data Source and Tools
 
@@ -30,6 +34,8 @@ The project follows a three-stage development process:
 * **NLP/Deep Learning:** `transformers`, `torch`, `datasets` (for efficient handling of large text data)
 * **Deployment:** `Flask`, `Docker`
 * **EDA:** `matplotlib`, `seaborn`, `nltk`
+---
+---
 
 
 ## 4. Modeling and Results
@@ -76,8 +82,8 @@ The project follows a three-stage development process:
 | **Serving** | *`Flask API`* | Provides a low-latency REST API endpoint for real-time predictions. | `api.py` |
 | **Deployment** | *`Docker`* | Containerizes the application, dependencies, and model for consistent, environment-agnostic deployment. |`Dockerfile`, `config.py`|
 
-* **Model:** DistilBERT
-* **Hyperparameters:** Key parameters like $\mathbf{MAX\_LEN=128}$, $\mathbf{TRAIN\_BATCH\_SIZE=1}$ (limited by VRAM), and a critical **$\mathbf{LEARNING\_RATE=3\text{e-}5}$** were set.
+
+* **Hyperparameters:** Key parameters like $\mathbf{MAX\_LEN=128}$, $\mathbf{TRAIN\_BATCH\_SIZE=16}$ (limited by VRAM), and a critical **$\mathbf{LEARNING\_RATE=3\text{e-}5}$** were set.
 * **Reasoning:** 
     1. Transformers learn rich contextual embeddings, offering superior performance over traditional feature engineering, especially for complex sentiment nuances.
     2. DistilBERT was chosen over the full BERT-Base model due to its efficiency. It is 40% smaller, 60% faster, and retains approximately 97% of BERT's language understanding capabilities, making it ideal for low-latency, production-level serving in a containerized environment.
@@ -90,6 +96,8 @@ The project follows a three-stage development process:
 
 * **Expected Performance:** Expected F1-Score to exceed $\mathbf{90\%}$.
 
+---
+---
 
 ## 5. Deployment and MLOps (Flask & Docker)
 
@@ -100,6 +108,9 @@ The final fine-tuned model weights were integrated into a production-ready API:
 * **Containerization:** A **Dockerfile** was used to package the Python environment, dependencies, Flask application (`api.py`), and the trained model (`model.bin`) into a single portable image.
 * **Key Path:** All deployment assets were mapped to the internal container path, `/root/docker_data/`, ensuring environment independence.
 
+---
+---
+
 ## 6. Reflections and Next Steps
 
 ### Key Learnings/Hurdles
@@ -108,6 +119,8 @@ The final fine-tuned model weights were integrated into a production-ready API:
 2. **Robust Pathing and Configuration:** I designed a robust path-finding logic in `config.py` using Python's `pathlib.Path` and a Docker environment variable (`IN_DOCKER=true`), so that the model could find files correctly no matter where it's running from (local path or /app Docker WORKDIR).
 3. **Dependency and Deployment Consistency:** Docker Containerization: The Dockerfile locks the application to the python:3.9-slim base image and explicitly defines all dependencies in requirements.txt. This guarantees that the execution environment is identical from training to production.
 
+---
+---
 
 ## 7. Deployment Quick Start / Running the API
 As this project uses Docker to package the fine-tuned BERT model and Flask API, you could launch the complete, containerized service locally with just two commands:
