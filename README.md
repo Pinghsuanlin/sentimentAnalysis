@@ -82,8 +82,7 @@ The project follows a three-stage development process:
 | **Serving** | *`Flask API`* | Provides a low-latency REST API endpoint for real-time predictions. | `api.py` |
 | **Deployment** | *`Docker`* | Containerizes the application, dependencies, and model for consistent, environment-agnostic deployment. |`Dockerfile`, `config.py`|
 
-
-* **Hyperparameters:** Key parameters like $\mathbf{MAX\_LEN=128}$, {$\mathbf{TRAIN\_BATCH\_SIZE=16}$} (limited by VRAM), and a critical **$\mathbf{LEARNING\_RATE=3\text{e-}5}$** were set.
+* **Hyperparameters:** Key parameters like $\mathbf{MAX\_LEN=128}$, $\mathbf{TRAIN\_BATCH\_SIZE}=16$  (limited by VRAM), and a critical **$\mathbf{LEARNING\_RATE=3\text{e-}5}$** were set.
 * **Reasoning:** 
     1. Transformers learn rich contextual embeddings, offering superior performance over traditional feature engineering, especially for complex sentiment nuances.
     2. DistilBERT was chosen over the full BERT-Base model due to its efficiency. It is 40% smaller, 60% faster, and retains approximately 97% of BERT's language understanding capabilities, making it ideal for low-latency, production-level serving in a containerized environment.
