@@ -30,7 +30,6 @@ def train_fn(data_loader, model, optimizer, device, accumulation_steps, schedule
         
         try:
             ids = d['ids'].to(device, dtype=torch.long) # move tensors to GPU/CPU and convert to long (integer) dtype
-            token_type_ids = d['token_type_ids'].to(device, dtype=torch.long)
             mask = d['mask'].to(device, dtype=torch.long)
             targets = d['targets'].to(device, dtype=torch.float)
 
@@ -40,7 +39,6 @@ def train_fn(data_loader, model, optimizer, device, accumulation_steps, schedule
             outputs = model(
                 input_ids=ids,
                 attention_mask=mask,
-                token_type_ids=token_type_ids
             )
 
             if bi < 5:
@@ -51,21 +49,14 @@ def train_fn(data_loader, model, optimizer, device, accumulation_steps, schedule
 
             # compute loss
             loss = loss_fn(outputs, targets)
+
+            loss = loss / accumulation_steps  # normalize loss to account for gradient accumulation
             if bi < 5:
                 print(f"[train_fn] Batch {bi+1}: loss computed: {loss.item()}")
             # backward pass
             loss.backward()
             if bi < 5:
                 print(f"[train_fn] Batch {bi+1}: backward complete")
-
-            # Temporarily force the optimizer step on the first batch to debug
-            # if (bi + 1) == 1:
-            #     print(f"[train_fn] Batch {bi+1}: Forcing optimizer step for debug.")
-            #     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            #     optimizer.step()
-            #     scheduler.step()
-            #     optimizer.zero_grad()
-            #     break # Stop after the first step for quick diagnosis
 
             # run forward pass
             if (bi + 1) % accumulation_steps == 0:
@@ -98,14 +89,12 @@ def eval_fn(data_loader, model, device, loss_fn=bce_loss):
     with torch.no_grad():
         for d in tqdm(data_loader, total=len(data_loader)):
             ids = d['ids'].to(device, dtype=torch.long)
-            token_type_ids = d['token_type_ids'].to(device, dtype=torch.long)
             mask = d['mask'].to(device, dtype=torch.long)
             targets = d['targets'].to(device, dtype=torch.float)
 
             outputs = model(
                 input_ids=ids,
                 attention_mask=mask,
-                token_type_ids=token_type_ids
             )
 
             # Use in-place sigmoid and move to CPU in batches

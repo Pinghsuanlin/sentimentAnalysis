@@ -1,22 +1,25 @@
 # ============================ Orchestrate Training Process ============================ #
 # manage the overall training process, including data loading, model training, validation, and saving the best model.
 
-import config
-import dataset
+from src.DistilBERT_base import config
+from src.DistilBERT_base import dataset
 import torch
 import torch.nn as nn
 import pandas as pd
-import engine
+from src.DistilBERT_base import engine
 import numpy as np
 from sklearn import metrics
 
 from sklearn import model_selection
-from model import BERTBaseUncased
+from src.DistilBERT_base.model import DistilBERTBaseUncased
 from torch.optim import AdamW
 from transformers import get_linear_schedule_with_warmup
 
 def run():
     dfx = pd.read_csv(config.TRAINING_FILE).fillna("none")
+    print("--- DOWNSAMPLING DATA TO 10,000 SAMPLES FOR CPU TRAINING ---")
+    dfx = dfx.sample(n=1000, random_state=config.RANDOM_SEED).reset_index(drop=True)
+
     dfx.sentiment = dfx.sentiment.apply(
         lambda x: 1 if x == "positive" else 0
     )
@@ -50,7 +53,7 @@ def run():
         train_dataset,
         batch_size=config.TRAIN_BATCH_SIZE,
         shuffle=True,
-        num_workers=0
+        num_workers=2
     )
 
     valid_dataset = dataset.BERTDataset(
@@ -62,20 +65,22 @@ def run():
         valid_dataset,
         batch_size=config.VALID_BATCH_SIZE,
         shuffle=True,
-        num_workers=0
+        num_workers=2
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = BERTBaseUncased()
+    model = DistilBERTBaseUncased()
     model.to(device)
 
     param_optimizer = list(model.named_parameters())
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
     optimizer_parameters = [
+        # group 1. apply weiht decay (regularization) to all parameters except for the ones in no_decay to prevent overfitting
         {
             'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)],
             'weight_decay': 0.01
         },
+        # group 2. no weight decay for parameters in no_decay
         {
             'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
             'weight_decay': 0.0

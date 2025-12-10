@@ -1,7 +1,7 @@
 # ============================= Define Dataset Class ============================= #
 # handle text preprocessing and tokenization (converting text into tensors that BERT can process)
 
-import config
+from src.DistilBERT_base import config
 import torch
 
 class BERTDataset:
@@ -36,18 +36,12 @@ class BERTDataset:
         )
         
         # inputs returned with shape (1, seq_len) because of `return_tensors='pt'`
-        ids = inputs['input_ids'].squeeze(0)        # shape: (seq_len,)
-        mask = inputs['attention_mask'].squeeze(0)  # shape: (seq_len,)
-        token_type_ids = inputs['token_type_ids'].squeeze(0)
-
-        # Ensure correct dtypes
-        ids = ids.to(dtype=torch.long)
-        mask = mask.to(dtype=torch.long)
-        token_type_ids = token_type_ids.to(dtype=torch.long)
+        ids = inputs['input_ids'].squeeze(0).to(dtype=torch.long)        # shape: (seq_len,) and to correct dtypes
+        mask = inputs['attention_mask'].squeeze(0).to(dtype=torch.long)  # shape: (seq_len,)
+        target = torch.tensor(self.targets[item], dtype=torch.float).unsqueeze(0)  # shape: (1,)
 
         return {
             'ids': ids,
             'mask': mask,
-            'token_type_ids': token_type_ids,
-            'targets': torch.tensor(self.targets[item], dtype=torch.float).unsqueeze(0) # unsqueeze to add an extra dimension
+            'targets': target
         }
